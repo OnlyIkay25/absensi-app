@@ -2,7 +2,16 @@
 nixPkgs = ["php83", "php83Packages.composer"]
 
 [phases.install]
-cmds = ["composer install --no-dev --optimize-autoloader"]
+cmds = [
+  "composer install --no-dev --optimize-autoloader"
+]
+
+[phases.build]
+cmds = [
+  "mkdir -p database",
+  "touch database/database.sqlite",
+  "php artisan migrate --force"
+]
 
 [start]
 cmd = "php artisan serve --host=0.0.0.0 --port=$PORT"
