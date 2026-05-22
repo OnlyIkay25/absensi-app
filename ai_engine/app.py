@@ -10,7 +10,7 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({"status": "success", "message": "Mesin AI Aktif! 🤖"})
+    return jsonify({"status": "success", "message": "Mesin Aktif!"})
 
 # ENDPOINT UNTUK DAFTAR WAJAH
 @app.route('/api/encode', methods=['POST'])

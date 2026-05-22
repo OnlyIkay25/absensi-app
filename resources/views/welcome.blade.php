@@ -1,136 +1,182 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Absensi Pintar - Face Recognition System</title>
-
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HadirMas - Absensi Modern dengan Face Recognition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
         }
+
         .hero-gradient {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(34, 211, 238, 0.8);
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
+            animation: scan 3s ease-in-out infinite;
+        }
+
+        @keyframes scan {
+            0%, 100% { top: 10%; }
+            50% { top: 90%; }
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .face-grid {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
     </style>
 </head>
-<body class="antialiased bg-gray-50 text-gray-900 font-figtree">
+<body class="bg-slate-50 text-slate-900">
 
-    <nav class="fixed w-full z-50 glass-effect border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    <div class="bg-blue-600 p-2 rounded-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10H9.01M15 10H15.01M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z"></path></svg>
-                    </div>
-                    <span class="text-xl font-bold text-blue-900">HadirMas</span>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    @if (Route::has('login'))
-                        @auth
-                            <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-blue-600 transition">Dashboard</a>
-                        @else
-                            <a href="{{ route('login') }}" class="font-semibold text-gray-600 hover:text-blue-600 transition">Log in</a>
-                            @if (Route::has('register'))
-                                <a href="{{ route('register') }}" class="bg-blue-600 text-white px-5 py-2 rounded-full font-semibold hover:bg-blue-700 transition shadow-md">Daftar Sekarang</a>
-                            @endif
-                        @endauth
-                    @endif
-                </div>
+    <nav class="bg-white py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-1.5 rounded-lg text-white">
+                <i class="fas fa-h-square text-xl"></i>
             </div>
+            <span class="text-xl font-bold tracking-tight text-slate-800">HadirMas</span>
+        </div>
+        <div class="flex items-center gap-6">
+            @if (Route::has('login'))
+                @auth
+                    <a href="{{ url('/dashboard') }}" class="text-sm font-bold text-blue-600 hover:text-blue-700 transition">Dashboard</a>
+                @else
+                    <a href="{{ route('login') }}" class="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Log In</a>
+                    @if (Route::has('register'))
+                        <a href="{{ route('register') }}" class="bg-blue-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-700 transition shadow-md shadow-blue-200">Daftar Sekarang</a>
+                    @endif
+                @endauth
+            @endif
         </div>
     </nav>
 
-    <section class="pt-32 pb-20 hero-gradient text-white overflow-hidden relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="lg:flex items-center">
-                <div class="lg:w-1/2 mb-12 lg:mb-0">
-                    <h1 class="text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                        Absensi Modern dengan <br> <span class="text-blue-200">Face Recognition</span>
-                    </h1>
-                    <p class="text-xl mb-8 text-blue-50 opacity-90 leading-relaxed">
-                        Tingkatkan kedisiplinan dan akurasi data kehadiran dengan teknologi pengenalan wajah berbasis AI. Cepat, aman, dan tanpa sentuh.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="{{ route('register') }}" class="bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition text-center shadow-lg">
-                            Mulai Sekarang
-                        </a>
-                        <a href="#fitur" class="border-2 border-white/30 bg-white/10 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition text-center backdrop-blur-sm">
-                            Pelajari Fitur
-                        </a>
-                    </div>
+    <header class="hero-gradient text-white py-16 md:py-24 px-6 md:px-12 overflow-hidden relative">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+            <div class="z-10">
+                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6">
+                    Absensi Modern <br> dengan <span class="text-cyan-300">Face Recognition</span>
+                </h1>
+                <p class="text-lg text-blue-50 mb-10 max-w-lg leading-relaxed opacity-90">
+                    Tingkatkan kedisiplinan dan akurasi data kehadiran dengan teknologi pengenalan wajah. Cepat, aman, dan tanpa sentuh.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    @auth
+                        <a href="{{ url('/dashboard') }}" class="bg-white text-blue-600 px-8 py-3.5 rounded-xl font-bold hover:bg-blue-50 transition shadow-lg inline-block">Mulai Sekarang</a>
+                    @else
+                        <a href="{{ route('login') }}" class="bg-white text-blue-600 px-8 py-3.5 rounded-xl font-bold hover:bg-blue-50 transition shadow-lg inline-block">Mulai Sekarang</a>
+                    @endauth
+                    <a href="#fitur" class="bg-transparent border-2 border-white/30 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-white/10 transition inline-block">Pelajari Fitur</a>
                 </div>
-                <div class="lg:w-1/2 flex justify-center">
-                    <div class="relative w-full max-w-lg">
-                        <div class="absolute top-0 -left-4 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-                        <div class="absolute top-0 -right-4 w-72 h-72 bg-blue-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-                        
-                        <div class="relative bg-white/10 p-4 rounded-3xl border border-white/20 backdrop-blur-md shadow-2xl">
-                             <div class="bg-gray-900 rounded-2xl aspect-video flex items-center justify-center relative overflow-hidden">
-                                <div class="absolute inset-0 border-2 border-blue-400 opacity-50 m-12 rounded-lg"></div>
-                                <div class="text-center">
-                                    <svg class="w-16 h-16 text-blue-400 mx-auto mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                    <p class="text-blue-300 text-sm font-mono tracking-widest">SCANNING FACE...</p>
-                                </div>
-                             </div>
+            </div>
+
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-3xl blur opacity-30 group-hover:opacity-50 transition"></div>
+                <div class="relative bg-slate-900 aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-2xl face-grid">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div class="w-48 h-48 border-2 border-dashed border-cyan-400/50 rounded-full flex items-center justify-center relative">
+                            <div class="w-40 h-40 border-2 border-cyan-400 rounded-full flex items-center justify-center animate-pulse">
+                                <i class="fas fa-user-check text-5xl text-cyan-400"></i>
+                            </div>
+                            <div class="scan-overlay"></div>
+                        </div>
+                        <div class="mt-8 text-center">
+                            <span class="text-cyan-400 font-mono tracking-widest text-sm uppercase">Scanning Face...</span>
+                            <div class="flex gap-1 justify-center mt-2">
+                                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce"></div>
+                                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                            </div>
                         </div>
                     </div>
+                    
+                    <div class="absolute top-4 left-4 flex gap-2">
+                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="absolute bottom-4 right-4 flex gap-4 text-[10px] text-cyan-400/60 font-mono">
+                        <span>LAT: -6.2348</span>
+                        <span>LNG: 106.9896</span>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="fitur" class="py-20 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Fitur Unggulan</span>
+            <h2 class="text-3xl md:text-4xl font-bold mt-4 text-slate-800">Segala kemudahan dalam satu platform</h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="feature-card p-8 bg-white rounded-2xl border border-blue-100 transition duration-300">
+                <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6 text-2xl">
+                    <i class="fas fa-face-smile"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4 text-slate-800">Face Recognition</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    Teknologi Face Recognition yang memastikan absen tidak bisa dimanipulasi dan sangat cepat.
+                </p>
+            </div>
+
+            <div class="feature-card p-8 bg-white rounded-2xl border border-green-100 transition duration-300">
+                <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 mb-6 text-2xl">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4 text-slate-800">Manajemen Izin</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    Ajukan sakit, terlambat, atau izin tidak hadir lengkap dengan lampiran bukti dokumen.
+                </p>
+            </div>
+
+            <div class="feature-card p-8 bg-white rounded-2xl border border-purple-100 transition duration-300">
+                <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 mb-6 text-2xl">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-4 text-slate-800">Laporan Admin</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    Admin dapat memantau kehadiran Mahasiswa secara real-time dan mengelola data izin.
+                </p>
             </div>
         </div>
     </section>
 
-    <section id="fitur" class="py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-blue-600 font-bold tracking-wide uppercase">Fitur Unggulan</h2>
-                <p class="mt-2 text-4xl font-extrabold text-gray-900">Segala kemudahan dalam satu platform</p>
+    <footer class="bg-slate-900 text-white py-12 px-6 md:px-12">
+        <div class="max-w-7xl mx-auto flex flex-col items-center">
+            <div class="flex items-center gap-2 mb-6">
+                <div class="bg-blue-600 p-1.5 rounded-lg text-white">
+                    <i class="fas fa-h-square text-xl"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight">HadirMas</span>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <div class="p-8 rounded-2xl border border-gray-100 bg-gray-50 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition">
-                        <svg class="w-8 h-8 text-blue-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Face Recognition</h3>
-                    <p class="text-gray-600">Teknologi AI yang memastikan absen tidak bisa dimanipulasi dan sangat cepat.</p>
-                </div>
-
-                <div class="p-8 rounded-2xl border border-gray-100 bg-gray-50 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 bg-green-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-green-600 transition">
-                        <svg class="w-8 h-8 text-green-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Manajemen Izin</h3>
-                    <p class="text-gray-600">Ajukan sakit, terlambat, atau izin tidak hadir lengkap dengan lampiran bukti dokumen.</p>
-                </div>
-
-                <div class="p-8 rounded-2xl border border-gray-100 bg-gray-50 hover:shadow-xl transition group">
-                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-6 group-hover:bg-purple-600 transition">
-                        <svg class="w-8 h-8 text-purple-600 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 00-2-2H5a2 2 0 00-2 2v10m14 0v-4a2 2 0 012-2h2a2 2 0 012 2v4m0 0h-2a2 2 0 01-2-2v-4m-7 10h7m-7-5h7" stroke-width="2" stroke-linecap="round"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Laporan Admin</h3>
-                    <p class="text-gray-600">Admin dapat memantau kehadiran Mahasiswa secara real-time dan mengelola data izin.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="bg-gray-900 text-gray-400 py-12">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex justify-center gap-2 mb-4">
-                 <div class="bg-blue-600 p-1 rounded">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10H9.01M15 10H15.01M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z"></path></svg>
-                </div>
-                <span class="text-white font-bold">HadirMas</span>
-            </div>
-            <p>&copy; 2026 HadirMas System. Dibuat dengan Laravel 10 & Python.</p>
+            <p class="text-slate-400 text-sm text-center">
+                © {{ date('Y') }} HadirMas System. Dibuat Oleh Ikrar Wira Buwana
+            </p>
         </div>
     </footer>
 

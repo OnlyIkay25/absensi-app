@@ -6,27 +6,71 @@
     </x-slot>
 
     @php
+        $userId = Auth::id();
         $hariIni = \Carbon\Carbon::now()->translatedFormat('l');
-        $jamIni = \Carbon\Carbon::now()->format('H:i');
+        $waktuSekarang = \Carbon\Carbon::now();
+        $jamIni = $waktuSekarang->format('H:i');
         
-        $mkHariIni = 'Tidak Ada Jadwal';
-        $dosenHariIni = '-';
-        $waktuHariIni = '-';
-
+        $jadwalHariIni = [];
+        
         if ($hariIni == 'Senin') {
-            $mkHariIni = 'Kriptografi'; $dosenHariIni = 'Erick Harlest Budi Harjo'; $waktuHariIni = '19:30 - 21:30 WIB';
+            $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Kriptografi', 'dosen' => 'Erick Harlest Budi Harjo', 'ruang' => 'Ruang 401'];
         } elseif ($hariIni == 'Selasa') {
-            if ($jamIni < '19:00') { $mkHariIni = 'Virtual dan Augmented'; $dosenHariIni = 'Muhammad Muharrom'; $waktuHariIni = '17:30 - 19:30 WIB'; } 
-            else { $mkHariIni = 'Proyek Teknologi Informasi'; $dosenHariIni = 'Dr. Heri Kuswara'; $waktuHariIni = '19:30 - 21:30 WIB'; }
+            $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '19:30', 'mk' => 'Virtual dan Augmented Reality', 'dosen' => 'Muhammad Muharrom', 'ruang' => 'Ruang 302'];
+            $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Proyek Teknologi Informasi', 'dosen' => 'Dr. Heri Kuswara', 'ruang' => 'Ruang 302'];
         } elseif ($hariIni == 'Rabu') {
-            if ($jamIni < '19:00') { $mkHariIni = 'Pengolah Citra'; $dosenHariIni = 'Giatika Chrisnawati'; $waktuHariIni = '17:30 - 19:30 WIB'; } 
-            else { $mkHariIni = 'Cloud Computering'; $dosenHariIni = 'Hidayat Muhammad Nur'; $waktuHariIni = '19:30 - 21:30 WIB'; }
+            $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '19:30', 'mk' => 'Pengolah Citra', 'dosen' => 'Giatika Chrisnawati', 'ruang' => 'Ruang 304'];
+            $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Cloud Computering', 'dosen' => 'Hidayatullah', 'ruang' => '304'];
         } elseif ($hariIni == 'Kamis') {
-            if ($jamIni < '19:00') { $mkHariIni = 'Arsitektur Enterprise'; $dosenHariIni = 'Rinawati'; $waktuHariIni = '17:30 - 19:30 WIB'; } 
-            else { $mkHariIni = 'Internet Of Things'; $dosenHariIni = 'Sigit Wibawa'; $waktuHariIni = '19:30 - 21:30 WIB'; }
-        } else {
-            // Jika hari Jumat, Sabtu, Minggu (Untuk Mancing)
-            $mkHariIni = 'Mata Kuliah Pengganti / Ekstra'; $dosenHariIni = 'Dosen Pengampu'; $waktuHariIni = 'Menyesuaikan';
+            $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '19:30', 'mk' => 'Arsitektur Enterprise', 'dosen' => 'Rinawati', 'ruang' => 'Ruang 301'];
+            $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Internet Of Things', 'dosen' => 'Sigit Wibawa', 'ruang' => 'Ruang 301'];
+        }
+
+        $mkRequest = request('mk');
+        $jadwalAktif = null;
+
+        if ($mkRequest) {
+            foreach ($jadwalHariIni as $j) {
+                if ($j['mk'] == $mkRequest) {
+                    $jadwalAktif = $j; break;
+                }
+            }
+        }
+
+        if (!$jadwalAktif && count($jadwalHariIni) > 0) {
+            foreach ($jadwalHariIni as $j) {
+                if ($jamIni <= $j['jam_selesai']) {
+                    $jadwalAktif = $j; break;
+                }
+            }
+            if (!$jadwalAktif) $jadwalAktif = end($jadwalHariIni);
+        }
+
+        $mkHariIni = $jadwalAktif ? $jadwalAktif['mk'] : 'Tidak Ada Jadwal';
+        $dosenHariIni = $jadwalAktif ? $jadwalAktif['dosen'] : '-';
+        $waktuHariIni = $jadwalAktif ? $jadwalAktif['jam'] . ' - ' . $jadwalAktif['jam_selesai'] . ' WIB' : '-';
+        $jamMulaiStr = $jadwalAktif ? $jadwalAktif['jam'] : '00:00';
+        $jamSelesaiStr = $jadwalAktif ? $jadwalAktif['jam_selesai'] : '00:00';
+
+        $adaJadwal = ($mkHariIni != 'Tidak Ada Jadwal');
+        $sudahAbsen = false;
+        $belumMulai = false;
+        $waktuHabis = false;
+        $statusTerlambat = false;
+
+        if ($adaJadwal) {
+            $jamMulai = \Carbon\Carbon::createFromFormat('H:i', $jamMulaiStr);
+            $jamSelesai = \Carbon\Carbon::createFromFormat('H:i', $jamSelesaiStr);
+            $batasTelat = $jamMulai->copy()->addMinutes(15);
+
+            $sudahAbsen = \App\Models\Absensi::where('user_id', $userId)
+                            ->whereDate('created_at', \Carbon\Carbon::today())
+                            ->where('mata_kuliah', $mkHariIni)
+                            ->exists();
+                            
+            $belumMulai = $waktuSekarang->lessThan($jamMulai);
+            $waktuHabis = $waktuSekarang->greaterThan($jamSelesai);
+            $statusTerlambat = $waktuSekarang->between($batasTelat, $jamSelesai);
         }
     @endphp
 
@@ -60,10 +104,12 @@
                     
                     <div class="w-full md:w-3/5">
                         <div class="relative bg-gray-200 rounded-3xl overflow-hidden aspect-video border border-gray-100 flex flex-col justify-end shadow-inner">
-                            <video id="webcam" autoplay playsinline class="absolute inset-0 w-full h-full object-cover"></video>
+                            <video id="webcam" autoplay playsinline class="absolute inset-0 w-full h-full object-cover transform scale-x-[-1]"></video>
                             <canvas id="canvas" class="hidden"></canvas>
                             
-                            <div class="absolute inset-8 border-2 border-dashed border-white/50 rounded-3xl pointer-events-none"></div>
+                            <div class="absolute inset-8 border-2 border-dashed border-white/50 rounded-3xl pointer-events-none flex items-center justify-center">
+                                <div class="w-32 h-32 border border-white/30 rounded-full"></div>
+                            </div>
 
                             <div class="relative z-10 bg-black/60 backdrop-blur-md py-3 text-center w-full mt-auto">
                                 <p id="status-face" class="text-white text-sm font-bold tracking-wide flex items-center justify-center gap-2">
@@ -87,22 +133,39 @@
                             </div>
                             
                             <div class="space-y-3 pt-4 border-t border-gray-50">
-                                <div class="flex items-center text-sm text-gray-500 gap-3">
+                                <div class="flex items-center text-sm text-gray-500 gap-3 font-medium">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                     {{ $waktuHariIni }}
                                 </div>
-                                <div class="flex items-center text-sm text-gray-500 gap-3">
+                                <div class="flex items-center text-sm text-gray-500 gap-3 font-medium">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                     Dosen: {{ $dosenHariIni }}
                                 </div>
                             </div>
                         </div>
 
-                        <button id="btn-absen" class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold text-base shadow-lg shadow-blue-200 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            Kirim Kehadiran
-                        </button>
-                    </div>
+                        <div>
+                            @if(!$adaJadwal)
+                                <button disabled class="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-bold text-sm cursor-not-allowed border border-slate-200">TIDAK ADA JADWAL HARI INI</button>
+                            @elseif(!Auth::user()->face_embedding)
+                                <button disabled class="w-full py-4 bg-slate-200 text-slate-400 rounded-2xl font-bold text-sm cursor-not-allowed">KUNCI WAJAH</button>
+                            @elseif($sudahAbsen)
+                                <button disabled class="w-full py-4 bg-emerald-50 text-emerald-600 rounded-2xl font-bold text-sm cursor-not-allowed border border-emerald-200">SUDAH ABSEN HARI INI</button>
+                            @elseif($waktuHabis)
+                                <button disabled class="w-full py-4 bg-rose-50 text-rose-500 rounded-2xl font-bold text-sm cursor-not-allowed border border-rose-200">WAKTU ABSEN HABIS</button>
+                            @elseif($belumMulai)
+                                <button disabled class="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-bold text-sm cursor-not-allowed border border-slate-200">⏳ KELAS BELUM DIMULAI</button>
+                            @else
+                                <button id="btn-absen" class="w-full py-4 {{ $statusTerlambat ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-200' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' }} text-white rounded-2xl font-bold text-base shadow-lg transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    {{ $statusTerlambat ? 'KIRIM KEHADIRAN (TERLAMBAT)' : 'Kirim Kehadiran' }}
+                                </button>
+                                @if($statusTerlambat)
+                                    <p class="text-center text-[10px] font-bold text-amber-500 mt-2 animate-pulse">⚠️ Melewati batas waktu 15 menit</p>
+                                @endif
+                            @endif
+                        </div>
 
+                    </div>
                 </div>
             </div>
         </div>
@@ -113,43 +176,71 @@
         const btnAbsen = document.getElementById('btn-absen');
         const statusText = document.getElementById('status-face');
 
-        // Nyalakan kamera HANYA jika mahasiswa punya face_embedding
-        @if(Auth::user()->face_embedding)
+        @if(Auth::user()->face_embedding && !$sudahAbsen && !$waktuHabis && !$belumMulai && $adaJadwal)
             navigator.mediaDevices.getUserMedia({ video: true })
                 .then(stream => { video.srcObject = stream; })
                 .catch(err => { statusText.innerHTML = "❌ Gagal akses kamera"; });
+        @else
+            if(statusText) statusText.innerHTML = "Kamera Nonaktif";
         @endif
 
-        btnAbsen.onclick = async () => {
-            const canvas = document.getElementById('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0);
-            const image = canvas.toDataURL('image/jpeg');
+        if(btnAbsen) {
+            btnAbsen.onclick = async () => {
+                const canvas = document.getElementById('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Mirror canvas agar saat difoto tidak terbalik
+                const ctx = canvas.getContext('2d');
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, 0, 0);
+                
+                const image = canvas.toDataURL('image/jpeg');
 
-            statusText.innerHTML = "Mencocokkan wajah... ⏳";
-            btnAbsen.disabled = true;
+                statusText.innerHTML = "Mencocokkan wajah... ⏳";
+                btnAbsen.disabled = true;
+                btnAbsen.innerHTML = "Tunggu...";
 
-            try {
-                const res = await fetch("{{ route('absen.store') }}", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: JSON.stringify({ image })
-                });
-                const data = await res.json();
+                try {
+                    const res = await fetch("{{ route('absen.store') }}", {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+                        },
+                        body: JSON.stringify({ 
+                            image: image,
+                            mata_kuliah: "{{ $mkHariIni }}",
+                            status_presensi: "{{ $statusTerlambat ? 'Terlambat' : 'Hadir' }}"
+                        })
+                    });
+                    
+                    const data = await res.json();
 
-                if(data.status === 'success') {
-                    statusText.innerHTML = "✅ Absen Berhasil!";
-                    // Lari ke riwayat setelah 2 detik
-                    setTimeout(() => window.location.href = "{{ route('history.index') }}", 2000);
-                } else {
-                    statusText.innerHTML = "❌ " + data.message;
+                    if(data.status === 'success' || res.ok) {
+                        statusText.innerHTML = "✅ Absen Berhasil! Mengalihkan...";
+                        
+                        // Ubah tombol jadi hijau
+                        btnAbsen.classList.replace('bg-blue-600', 'bg-emerald-500');
+                        btnAbsen.classList.replace('bg-amber-500', 'bg-emerald-500');
+                        btnAbsen.innerHTML = "Berhasil Diabsen!";
+                        
+                        // Memaksa browser pindah ke halaman riwayat secara instan!
+                        setTimeout(() => {
+                            window.location.replace("{{ url('/riwayat') }}");
+                        }, 1200);
+                    } else {
+                        statusText.innerHTML = "❌ " + (data.message || "Gagal absen.");
+                        btnAbsen.disabled = false;
+                        btnAbsen.innerHTML = "Coba Lagi";
+                    }
+                } catch (e) {
+                    statusText.innerHTML = "❌ Mesin AI Mati atau Error Jaringan.";
                     btnAbsen.disabled = false;
+                    btnAbsen.innerHTML = "Coba Lagi";
                 }
-            } catch (e) {
-                statusText.innerHTML = "❌ Mesin AI Mati.";
-                btnAbsen.disabled = false;
-            }
-        };
+            };
+        }
     </script>
 </x-app-layout>

@@ -38,10 +38,12 @@ class DashboardController extends Controller
             $result = $response->json();
 
             if ($response->successful() && $result['status'] == 'success') {
+                // LOGIKA BARU: Menyimpan Mata Kuliah dan Status Terlambat/Hadir
                 Absensi::create([
                     'user_id' => $user->id,
                     'waktu_absen' => now(),
-                    'status' => 'Hadir',
+                    'status' => $request->status_presensi ?? 'Hadir', // Otomatis mencatat Hadir/Terlambat
+                    'mata_kuliah' => $request->mata_kuliah,           // Otomatis mencatat Nama Mata Kuliah
                     'foto_snapshot' => $request->image
                 ]);
                 return response()->json(['status' => 'success', 'message' => 'Absen Berhasil!']);
@@ -53,7 +55,7 @@ class DashboardController extends Controller
     }
 
     // =======================================================
-    // FUNGSI YANG SEMPAT HILANG (IZIN & RIWAYAT)
+    // FUNGSI IZIN & RIWAYAT (Tetap Aman & Tidak Diubah)
     // =======================================================
 
     public function izin()

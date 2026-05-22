@@ -67,7 +67,7 @@
 
                         <div>
                             <label for="name" class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
-                            <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Misal: Budi Santoso" 
+                            <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Misal: Ikrar Wira" 
                                 class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
                             <x-input-error :messages="$errors->get('name')" class="mt-2 text-red-500" />
                         </div>
@@ -138,7 +138,7 @@
                 <div class="text-center mt-8">
                     <p class="text-gray-500 font-medium">
                         Sudah memiliki akun? 
-                        <a href="{{ route('login') }}" class="font-extrabold text-blue-600 hover:text-blue-800 transition-colors ml-1">Masuk ke sistem</a>
+                        <a href="{{ route('login') }}" class="font-extrabold text-blue-600 hover:text-blue-800 transition-colors ml-1">Masukan Akun</a>
                     </p>
                 </div>
 

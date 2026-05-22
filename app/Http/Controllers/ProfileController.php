@@ -70,7 +70,7 @@ class ProfileController extends Controller
     }
 
     // ========================================================
-    // FUNGSI BARU: Menerima Wajah dan Mengirim ke Mesin AI
+    // FUNGSI BARU: Menerima Wajah dan Mengirim ke Database
     // ========================================================
     public function registerFace(Request $request)
     {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\ExportController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -30,11 +31,34 @@ Route::middleware('auth')->group(function () {
 });
 
 // ==========================================
-// RUTE KHUSUS ADMIN (Sudah Dilengkapi!)
+// RUTE KHUSUS ADMIN (Sudah Dilengkapi & Aman!)
 // ==========================================
 Route::middleware(['auth'])->prefix('admin')->group(function () {
+    
+    // RUTE EKSPOR LAPORAN (Aman dari akses luar)
+    Route::get('/export-excel', [ExportController::class, 'exportExcel'])->name('admin.export.excel');
+    Route::get('/export-pdf', [ExportController::class, 'exportPdf'])->name('admin.export.pdf');
+
+    // RUTE DASHBOARD ANALYTIC ADMIN
     Route::get('/dashboard', function () { 
-        return view('admin.dashboard'); 
+        $hariIni = \Carbon\Carbon::today();
+
+        // 1. Hitung Statistik Kartu Atas
+        $totalMahasiswa = \App\Models\User::where('role', 'user')->count();
+        $hadirHariIni = \App\Models\Absensi::whereDate('waktu_absen', $hariIni)->count();
+        $izinHariIni = \App\Models\Izin::whereDate('created_at', $hariIni)->count();
+
+        // 2. Siapkan Data untuk Grafik Chart.js (7 Hari Terakhir)
+        $labelHari = [];
+        $dataHadir = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $tanggal = \Carbon\Carbon::today()->subDays($i);
+            $labelHari[] = $tanggal->translatedFormat('l'); // Nama hari (Senin, Selasa)
+            $dataHadir[] = \App\Models\Absensi::whereDate('waktu_absen', $tanggal)->count();
+        }
+
+        return view('admin.dashboard', compact('totalMahasiswa', 'hadirHariIni', 'izinHariIni', 'labelHari', 'dataHadir')); 
     })->name('admin.dashboard');
     
     // Rute Data Mahasiswa yang tadi dicari oleh Laravel
@@ -42,7 +66,6 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         $mahasiswas = User::where('role', 'user')->get();
         return view('admin.mahasiswa', compact('mahasiswas')); 
     })->name('admin.mahasiswa');
-
 
    // Rute untuk melihat data absensi
     Route::get('/absensi', function () { 
