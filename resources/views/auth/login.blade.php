@@ -72,7 +72,7 @@
                     <i class="fas fa-h-square text-2xl"></i>
                 </div>
                 <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Selamat Datang</h2>
-                <p class="text-slate-500">Silakan masukkan email dan kata sandi Anda.</p>
+                <p class="text-slate-500">Silakan masukkan akun Anda.</p>
             </div>
 
             <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -81,16 +81,16 @@
                 @csrf
 
                 <div>
-                    <label for="email" class="block text-sm font-bold text-slate-700 mb-2">Alamat Email</label>
+                    <label for="login" class="block text-sm font-bold text-slate-700 mb-2">NIM atau Alamat Email</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fas fa-envelope text-slate-400"></i>
+                            <i class="fas fa-user text-slate-400"></i>
                         </div>
-                        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" 
+                        <input id="login" type="text" name="login" value="{{ old('login') }}" required autofocus autocomplete="username" 
                             class="block w-full pl-11 pr-4 py-3.5 border border-slate-200 rounded-xl text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow bg-slate-50 focus:bg-white" 
-                            placeholder="nama@gmail.com">
+                            placeholder="NIM atau nama@gmail.com">
                     </div>
-                    <x-input-error :messages="$errors->get('email')" class="mt-2 text-rose-500 text-sm" />
+                    <x-input-error :messages="$errors->get('login')" class="mt-2 text-rose-500 text-sm" />
                 </div>
 
                 <div>
@@ -144,16 +144,4 @@
             
             if (pwdInput.type === 'password') {
                 pwdInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
-                eyeIcon.classList.add('text-blue-600');
-            } else {
-                pwdInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.remove('text-blue-600');
-                eyeIcon.classList.add('fa-eye');
-            }
-        }
-    </script>
-</body>
-</html>
+                eye

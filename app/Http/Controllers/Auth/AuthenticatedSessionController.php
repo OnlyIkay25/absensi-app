@@ -29,13 +29,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // --- TAMBAHAN LOGIKA CEK ROLE ---
-        // Jika yang login adalah admin, arahkan ke Dashboard Admin
+        // =========================================================
+        // LOGIKA BARU: Pengecekan Role (Admin vs Mahasiswa)
+        // =========================================================
         if ($request->user()->role === 'admin') {
+            // Jika yang login adalah Admin, arahkan ke Dashboard Admin
             return redirect()->route('admin.dashboard');
         }
 
-        // Jika bukan admin (user biasa), arahkan ke Dashboard User
+        // Jika bukan admin (mahasiswa), arahkan ke Dashboard Mahasiswa
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

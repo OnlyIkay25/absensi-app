@@ -8,7 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Http; // Ini wajib dipanggil untuk ngobrol sama API Python
+use Illuminate\Support\Facades\Http; 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -19,39 +21,51 @@ class ProfileController extends Controller
         ]);
     }
 
+    // ========================================================
+    // UPDATE PROFIL (Hanya Nama, Email, dan NIM)
+    // ========================================================
     public function update(Request $request)
     {
         $user = $request->user();
 
-        // Validasi data yang masuk
+        // Validasi data (Alamat, Tempat/Tanggal Lahir dihilangkan)
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'nim' => ['nullable', 'string', 'max:20', 'unique:users,nim,'.$user->id],
-            'tempat_lahir' => ['nullable', 'string', 'max:100'],
-            'tanggal_lahir' => ['nullable', 'date'],
-            'alamat' => ['nullable', 'string'],
+            'nim' => ['required', 'string', 'max:20', 'unique:users,nim,'.$user->id],
         ]);
 
-        // Isi data user dengan data baru dari form
+        // Isi data user dengan data baru
         $user->fill([
             'name' => $request->name,
             'email' => $request->email,
             'nim' => $request->nim,
-            'tempat_lahir' => $request->tempat_lahir,
-            'tanggal_lahir' => $request->tanggal_lahir,
-            'alamat' => $request->alamat,
         ]);
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
         }
 
-        // Simpan ke database
         $user->save();
 
-        // Kembalikan ke halaman profil dengan pesan sukses
         return redirect()->route('profile.edit')->with('status', 'Profil berhasil diperbarui!');
+    }
+
+    // ========================================================
+    // FUNGSI BARU: GANTI PASSWORD
+    // ========================================================
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect()->back()->with('status', 'Password Anda berhasil diperbarui!');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -70,7 +84,7 @@ class ProfileController extends Controller
     }
 
     // ========================================================
-    // FUNGSI BARU: Menerima Wajah dan Mengirim ke Database
+    // FUNGSI: Menerima Wajah dan Mengirim ke Database
     // ========================================================
     public function registerFace(Request $request)
     {

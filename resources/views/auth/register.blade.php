@@ -66,47 +66,17 @@
                         @csrf
 
                         <div>
-                            <label for="name" class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
-                            <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder="Misal: Ikrar Wira" 
+                            <label for="nim" class="block text-sm font-bold text-gray-700 mb-2">Nomor Induk Mahasiswa (NIM)</label>
+                            <input id="nim" type="text" name="nim" value="{{ old('nim') }}" required autofocus placeholder="Masukkan NIM yang diberikan oleh Admin" 
                                 class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                            <x-input-error :messages="$errors->get('name')" class="mt-2 text-red-500" />
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="tempat_lahir" class="block text-sm font-bold text-gray-700 mb-2">Kota Lahir</label>
-                                <input id="tempat_lahir" type="text" name="tempat_lahir" value="{{ old('tempat_lahir') }}" required placeholder="Misal: Jakarta" 
-                                    class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('tempat_lahir')" class="mt-2 text-red-500" />
-                            </div>
-                            <div>
-                                <label for="tanggal_lahir" class="block text-sm font-bold text-gray-700 mb-2">Tanggal Lahir</label>
-                                <input id="tanggal_lahir" type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir') }}" required 
-                                    class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('tanggal_lahir')" class="mt-2 text-red-500" />
-                            </div>
+                            <x-input-error :messages="$errors->get('nim')" class="mt-2 text-red-500 font-medium text-sm" />
                         </div>
 
                         <div>
-                            <label for="alamat" class="block text-sm font-bold text-gray-700 mb-2">Alamat Domisili</label>
-                            <textarea id="alamat" name="alamat" rows="2" required placeholder="Tuliskan alamat lengkap saat ini..." 
-                                class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4 resize-none">{{ old('alamat') }}</textarea>
-                            <x-input-error :messages="$errors->get('alamat')" class="mt-2 text-red-500" />
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Alamat Email</label>
-                                <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" placeholder="nama@email.com" 
-                                    class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-500" />
-                            </div>
-                            <div>
-                                <label for="no_hp" class="block text-sm font-bold text-gray-700 mb-2">Nomor Handphone</label>
-                                <input id="no_hp" type="text" name="no_hp" value="{{ old('no_hp') }}" required placeholder="08xxxxxxxxxx" 
-                                    class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('no_hp')" class="mt-2 text-red-500" />
-                            </div>
+                            <label for="email" class="block text-sm font-bold text-gray-700 mb-2">Alamat Email</label>
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" placeholder="nama@gmail.com" 
+                                class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
+                            <x-input-error :messages="$errors->get('email')" class="mt-2 text-red-500 font-medium text-sm" />
                         </div>
 
                         <div class="pt-2 pb-2">
@@ -118,13 +88,13 @@
                                 <label for="password" class="block text-sm font-bold text-gray-700 mb-2">Kata Sandi</label>
                                 <input id="password" type="password" name="password" required autocomplete="new-password" placeholder="Minimal 8 karakter"
                                     class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-500" />
+                                <x-input-error :messages="$errors->get('password')" class="mt-2 text-red-500 font-medium text-sm" />
                             </div>
                             <div>
                                 <label for="password_confirmation" class="block text-sm font-bold text-gray-700 mb-2">Ulangi Kata Sandi</label>
                                 <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" placeholder="Ketik ulang sandi"
                                     class="block w-full rounded-xl border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 py-3 px-4">
-                                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2 text-red-500" />
+                                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2 text-red-500 font-medium text-sm" />
                             </div>
                         </div>
 
