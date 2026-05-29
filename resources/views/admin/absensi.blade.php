@@ -29,13 +29,13 @@
                         <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase tracking-wider">Waktu & Hari</th>
                         <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase tracking-wider">Mata Kuliah & Dosen</th>
                         <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase tracking-wider">Status</th>
-                        <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase tracking-wider">Bukti Foto AI</th>
+                        <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase tracking-wider">Bukti Foto</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @forelse($absensis as $absen)
                         @php
-                            // Logika AI Pendeteksi Mata Kuliah
+                            // Logika Pendeteksi Mata Kuliah
                             $waktu = \Carbon\Carbon::parse($absen->waktu_absen);
                             $hari = $waktu->translatedFormat('l');
                             $jam = $waktu->format('H:i');

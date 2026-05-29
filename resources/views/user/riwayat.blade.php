@@ -6,7 +6,8 @@
     </x-slot>
 
     @php
-        function getInfoKuliah($waktu_absen) {
+        // 1. PERBAIKAN FUNGSI: Menggunakan Anonymous Function agar tidak bentrok
+        $getInfoKuliah = function($waktu_absen) {
             $hari = \Carbon\Carbon::parse($waktu_absen)->translatedFormat('l');
             $jam = \Carbon\Carbon::parse($waktu_absen)->format('H:i');
             
@@ -26,7 +27,11 @@
                     : ['mk' => 'Internet Of Things', 'dosen' => 'Sigit Wibawa'];
             }
             return ['mk' => 'Mata Kuliah Pengganti', 'dosen' => 'Dosen Pengampu'];
-        }
+        };
+
+        // 2. PERBAIKAN VARIABEL: Auto-Tarik data jika Controller lupa mengirimkannya
+        $absensis = $absensis ?? $riwayat ?? \App\Models\Absensi::where('user_id', Auth::id())->orderBy('waktu_absen', 'desc')->get();
+        $izins = $izins ?? \App\Models\Izin::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();
     @endphp
 
     <div class="py-12">
@@ -50,12 +55,12 @@
                                     <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase">Waktu & Hari</th>
                                     <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase">Mata Kuliah & Dosen</th>
                                     <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase">Status</th>
-                                    <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase">Bukti Foto AI</th>
+                                    <th class="py-4 px-6 text-left text-xs font-extrabold text-indigo-900 uppercase">Bukti Foto</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @foreach($absensis as $index => $absen)
-                                    @php $infoKuliah = getInfoKuliah($absen->waktu_absen); @endphp
+                                    @php $infoKuliah = $getInfoKuliah($absen->waktu_absen); @endphp
                                     <tr class="hover:bg-slate-50 transition">
                                         <td class="py-4 px-6 text-sm">
                                             <div class="font-bold text-gray-900">{{ \Carbon\Carbon::parse($absen->waktu_absen)->translatedFormat('l') }}</div>

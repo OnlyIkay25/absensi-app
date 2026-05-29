@@ -22,7 +22,7 @@
             $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '19:30', 'mk' => 'Pengolah Citra', 'dosen' => 'Giatika Chrisnawati', 'ruang' => 'Ruang 304'];
             $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Cloud Computering', 'dosen' => 'Hidayatullah', 'ruang' => '304'];
         } elseif ($hariIni == 'Kamis') {
-            $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '19:30', 'mk' => 'Arsitektur Enterprise', 'dosen' => 'Rinawati', 'ruang' => 'Ruang 301'];
+            $jadwalHariIni[] = ['jam' => '17:30', 'jam_selesai' => '21:30', 'mk' => 'Arsitektur Enterprise', 'dosen' => 'Rinawati', 'ruang' => 'Ruang 301'];
             $jadwalHariIni[] = ['jam' => '19:30', 'jam_selesai' => '21:30', 'mk' => 'Internet Of Things', 'dosen' => 'Sigit Wibawa', 'ruang' => 'Ruang 301'];
         }
 
@@ -185,61 +185,83 @@
         @endif
 
         if(btnAbsen) {
-            btnAbsen.onclick = async () => {
-                const canvas = document.getElementById('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                
-                // Mirror canvas agar saat difoto tidak terbalik
-                const ctx = canvas.getContext('2d');
-                ctx.translate(canvas.width, 0);
-                ctx.scale(-1, 1);
-                ctx.drawImage(video, 0, 0);
-                
-                const image = canvas.toDataURL('image/jpeg');
+            btnAbsen.onclick = () => {
+                // 1. Cek Dukungan GPS
+                if (!navigator.geolocation) {
+                    statusText.innerHTML = "❌ Browser tidak mendukung GPS.";
+                    return;
+                }
 
-                statusText.innerHTML = "Mencocokkan wajah... ⏳";
+                statusText.innerHTML = "Mencari lokasi Anda... 📍";
                 btnAbsen.disabled = true;
                 btnAbsen.innerHTML = "Tunggu...";
 
-                try {
-                    const res = await fetch("{{ route('absen.store') }}", {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json', 
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}' 
-                        },
-                        body: JSON.stringify({ 
-                            image: image,
-                            mata_kuliah: "{{ $mkHariIni }}",
-                            status_presensi: "{{ $statusTerlambat ? 'Terlambat' : 'Hadir' }}"
-                        })
-                    });
-                    
-                    const data = await res.json();
+                // 2. Dapatkan Lokasi (Geofencing)
+                navigator.geolocation.getCurrentPosition(async function(position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
 
-                    if(data.status === 'success' || res.ok) {
-                        statusText.innerHTML = "✅ Absen Berhasil! Mengalihkan...";
+                    // 3. Tangkap Foto dari Video (di-mirror agar pas)
+                    const canvas = document.getElementById('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(video, 0, 0);
+                    
+                    const image = canvas.toDataURL('image/jpeg');
+
+                    statusText.innerHTML = "Mencocokkan wajah & lokasi... ⏳";
+
+                    // 4. Kirim Data ke Laravel Backend
+                    try {
+                        const res = await fetch("{{ route('absen.store') }}", {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json', // PENTING: Mencegah crash jika Laravel mengirim pesan Error!
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+                            },
+                            body: JSON.stringify({ 
+                                image: image,
+                                latitude: lat,
+                                longitude: lon,
+                                mata_kuliah: "{{ $mkHariIni }}",
+                                status_presensi: "{{ $statusTerlambat ? 'Terlambat' : 'Hadir' }}"
+                            })
+                        });
                         
-                        // Ubah tombol jadi hijau
-                        btnAbsen.classList.replace('bg-blue-600', 'bg-emerald-500');
-                        btnAbsen.classList.replace('bg-amber-500', 'bg-emerald-500');
-                        btnAbsen.innerHTML = "Berhasil Diabsen!";
-                        
-                        // Memaksa browser pindah ke halaman riwayat secara instan!
-                        setTimeout(() => {
-                            window.location.replace("{{ url('/riwayat') }}");
-                        }, 1200);
-                    } else {
-                        statusText.innerHTML = "❌ " + (data.message || "Gagal absen.");
+                        const data = await res.json();
+
+                        if(res.ok && data.status === 'success') {
+                            statusText.innerHTML = "✅ Absen Berhasil! Mengalihkan...";
+                            
+                            // Ubah tombol jadi hijau
+                            btnAbsen.classList.replace('bg-blue-600', 'bg-emerald-500');
+                            btnAbsen.classList.replace('bg-amber-500', 'bg-emerald-500');
+                            btnAbsen.innerHTML = "Berhasil Diabsen!";
+                            
+                            setTimeout(() => {
+                                window.location.replace("{{ url('/riwayat') }}");
+                            }, 1200);
+                        } else {
+                            // Menangkap pesan error asli dari Laravel (Jarak jauh, Wajah beda, atau Database error)
+                            statusText.innerHTML = "❌ " + (data.message || data.error || "Gagal absen.");
+                            btnAbsen.disabled = false;
+                            btnAbsen.innerHTML = "Coba Lagi";
+                        }
+                    } catch (e) {
+                        statusText.innerHTML = "❌ Error Sistem: " + e.message;
                         btnAbsen.disabled = false;
                         btnAbsen.innerHTML = "Coba Lagi";
                     }
-                } catch (e) {
-                    statusText.innerHTML = "❌ Mesin AI Mati atau Error Jaringan.";
+                }, function(error) {
+                    statusText.innerHTML = "❌ Izin Lokasi (GPS) Ditolak!";
                     btnAbsen.disabled = false;
                     btnAbsen.innerHTML = "Coba Lagi";
-                }
+                }, { enableHighAccuracy: true });
             };
         }
     </script>

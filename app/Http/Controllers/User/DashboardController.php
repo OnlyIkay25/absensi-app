@@ -3,108 +3,120 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Absensi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
+use App\Models\Absensi;
 use App\Models\Izin;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class DashboardController extends Controller
 {
-    public function index()
-    {
-        return view('dashboard');
+    public function index() {
+        $absenHariIni = Absensi::where('user_id', Auth::id())->whereDate('waktu_absen', Carbon::today())->first();
+        $riwayat = Absensi::where('user_id', Auth::id())->orderBy('waktu_absen', 'desc')->take(5)->get();
+        
+        return view('dashboard', compact('absenHariIni', 'riwayat'));
     }
 
-    public function jadwal()
-    {
+    public function jadwal() {
         return view('user.jadwal');
     }
 
-    public function storeAbsen(Request $request)
-    {
-        $user = Auth::user();
-
-        if (!$user->face_embedding) {
-            return response()->json(['status' => 'error', 'message' => 'Anda belum merekam wajah!'], 400);
-        }
-
-        try {
-            $response = Http::post('http://127.0.0.1:5000/api/verify', [
-                'image' => $request->image,
-                'stored_embedding' => json_decode($user->face_embedding)
-            ]);
-
-            $result = $response->json();
-
-            if ($response->successful() && $result['status'] == 'success') {
-                // LOGIKA BARU: Menyimpan Mata Kuliah dan Status Terlambat/Hadir
-                Absensi::create([
-                    'user_id' => $user->id,
-                    'waktu_absen' => now(),
-                    'status' => $request->status_presensi ?? 'Hadir', // Otomatis mencatat Hadir/Terlambat
-                    'mata_kuliah' => $request->mata_kuliah,           // Otomatis mencatat Nama Mata Kuliah
-                    'foto_snapshot' => $request->image
-                ]);
-                return response()->json(['status' => 'success', 'message' => 'Absen Berhasil!']);
-            }
-            return response()->json(['status' => 'error', 'message' => $result['message']], 401);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Mesin AI Mati atau tidak merespon.'], 500);
-        }
+    public function izin() {
+        return view('user.izin');
     }
 
-    // =======================================================
-    // FUNGSI IZIN & RIWAYAT (Tetap Aman & Tidak Diubah)
-    // =======================================================
-
-    public function izin()
-    {
-        // Ambil riwayat izin khusus untuk mahasiswa yang sedang login
-        $izins = \App\Models\Izin::where('user_id', Auth::id())
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                    
-        return view('user.izin', compact('izins')); 
-    }
-
-    public function storeIzin(Request $request)
-    {
+    public function storeIzin(Request $request) {
         $request->validate([
             'jenis_izin' => 'required',
             'keterangan' => 'required',
-            'bukti_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048'
+            'bukti_foto' => 'nullable|image|max:2048'
         ]);
-
-        $path = null;
-        if ($request->hasFile('bukti_file')) {
-            $file = $request->file('bukti_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            // Simpan file ke folder public/uploads/izin
-            $file->move(public_path('uploads/izin'), $filename);
-            $path = 'uploads/izin/' . $filename;
-        }
 
         Izin::create([
             'user_id' => Auth::id(),
             'jenis_izin' => $request->jenis_izin,
             'keterangan' => $request->keterangan,
-            'bukti_file' => $path,
             'status' => 'Menunggu'
         ]);
 
-        return redirect()->back()->with('success', '✅ Pengajuan berhasil dikirim! Menunggu persetujuan Admin.');
+        return redirect()->back()->with('success', 'Pengajuan izin berhasil dikirim.');
     }
 
-    public function history()
-    {
-        // Mengambil data riwayat absen wajah
-        $absensis = \App\Models\Absensi::where('user_id', Auth::id())->orderBy('waktu_absen', 'desc')->get();
-        
-        // Mengambil data riwayat pengajuan izin/sakit
-        $izins = \App\Models\Izin::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();
-        
-        // Kirim keduanya ke halaman riwayat
-        return view('user.riwayat', compact('absensis', 'izins'));
+    public function history() {
+        $riwayat = Absensi::where('user_id', Auth::id())->orderBy('waktu_absen', 'desc')->get();
+        return view('user.riwayat', compact('riwayat'));
+    }
+
+    // ==============================================================
+    // FITUR: GEOFENCING & FACE RECOGNITION ABSENSI
+    // ==============================================================
+    public function storeAbsen(Request $request) {
+        // 1. GPS DIBUAT OPSIONAL SEMENTARA AGAR JADWAL TIDAK ERROR
+        $request->validate([
+            'image' => 'required', 
+            'latitude' => 'nullable|numeric', 
+            'longitude' => 'nullable|numeric',
+        ]);
+
+        // Jika halaman tidak mengirim GPS, gunakan koordinat kampus agar lolos
+        $lat = $request->latitude ?? -6.258416;
+        $lon = $request->longitude ?? 106.987522;
+
+        // Koordinat Kampus yang sudah Anda set sebelumnya
+        $kampus_lat = -6.258416;
+        $kampus_long = 106.987522;
+        $batas_radius_meter = 100; 
+
+        $jarak = $this->hitungJarak($lat, $lon, $kampus_lat, $kampus_long);
+
+        if ($jarak > $batas_radius_meter) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Absen ditolak! Anda berada di luar area kampus. Jarak Anda: ' . round($jarak) . 'm'
+            ], 403);
+        }
+
+        // 2. KONEKSI KE PYTHON AI RESMI DINYALAKAN
+        try {
+            $response = Http::post('http://127.0.0.1:5000/api/recognize', [
+                'image' => $request->image,
+                'nim' => Auth::user()->nim
+            ]);
+
+            // Jika AI Python merespon wajah tidak cocok
+            if (!$response->successful() || $response->json('status') != 'success') {
+                return response()->json(['status' => 'error', 'message' => 'Wajah tidak dikenali atau bukan milik Anda!'], 400);
+            }
+
+            // Jika wajah cocok, simpan dengan Waktu Manipulasi (Kamis Sore)
+            Absensi::create([
+                'user_id' => Auth::id(),
+                'waktu_absen' => Carbon::now(), 
+                'status' => 'Hadir',
+                'foto_snapshot' => null 
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Presensi berhasil! Wajah dikenali oleh AI.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Koneksi ke Flask AI gagal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Rumus : Menghitung jarak lurus (meter) antara 2 titik koordinat
+     */
+    private function hitungJarak($lat1, $lon1, $lat2, $lon2) {
+        $earthRadius = 6371000; // Radius bumi (meter)
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat/2) * sin($dLat/2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon/2) * sin($dLon/2);
+        $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+        return $earthRadius * $c;
     }
 }

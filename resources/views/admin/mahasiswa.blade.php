@@ -5,12 +5,12 @@
     
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Panel Master Data Mahasiswa</h1>
+            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Panel Data Mahasiswa</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola data NIM dan nama resmi mahasiswa sebelum registrasi mandiri dilakukan.</p>
         </div>
         <a href="{{ route('admin.dashboard') }}" class="text-sm font-bold text-gray-500 bg-white border border-gray-200 px-4 py-2.5 rounded-xl hover:shadow-sm transition flex items-center">
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Kembali ke Analitik
+            Kembali ke Dashboard
         </a>
     </div>
 
